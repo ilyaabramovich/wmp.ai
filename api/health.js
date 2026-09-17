@@ -1,8 +1,8 @@
-import { json, preflight } from './_shared.js';
+import { preflight, sendJson } from './_shared.js';
 
-export default function handler(req) {
-  if (req.method === 'OPTIONS') return preflight();
-  return json({
+export default function handler(req, res) {
+  if (preflight(req, res)) return;
+  sendJson(res, {
     ok: true,
     serverless: true,
     ytdlp: null,
