@@ -201,8 +201,9 @@ export class Player {
 
   setMuted(m: boolean) {
     this.engine.muted = m;
-    this.btnMute.querySelector<HTMLElement>('.ico-vol')!.hidden = m;
-    this.btnMute.querySelector<HTMLElement>('.ico-muted')!.hidden = !m;
+    // SVG elements have no `hidden` property; toggle the attribute so [hidden] CSS applies.
+    this.btnMute.querySelector('.ico-vol')!.toggleAttribute('hidden', m);
+    this.btnMute.querySelector('.ico-muted')!.toggleAttribute('hidden', !m);
     this.btnMute.title = m ? 'Unmute (F8)' : 'Mute (F8)';
   }
 
@@ -226,8 +227,8 @@ export class Player {
     if (this.state === s) return;
     this.state = s;
     const playing = s === 'playing' || s === 'buffering';
-    this.btnPlay.querySelector<HTMLElement>('.ico-play')!.hidden = playing;
-    this.btnPlay.querySelector<HTMLElement>('.ico-pause')!.hidden = !playing;
+    this.btnPlay.querySelector('.ico-play')!.toggleAttribute('hidden', playing);
+    this.btnPlay.querySelector('.ico-pause')!.toggleAttribute('hidden', !playing);
     this.btnPlay.classList.toggle('playing', playing);
     this.btnPlay.title = playing ? 'Pause (Ctrl+P)' : 'Play (Ctrl+P)';
     this.updateStatus();
