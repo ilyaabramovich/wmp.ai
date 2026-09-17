@@ -428,10 +428,21 @@ engine.on('tainted', async () => {
   if (!t) return;
   const isDirect = t.kind === 'url' && !t.src.startsWith('/api/proxy');
   const body = document.createElement('div');
-  body.innerHTML = `
-    <p>The audio is playing, but the visualizer is receiving <b>silence</b> from the analyser.</p>
-    <p>This happens when the stream is served <b>without CORS headers</b>: the browser lets the &lt;audio&gt; element play it, but taints the Web Audio graph and returns zeroed sample data.</p>
-    ${isDirect ? '<p>Windows Media Player can re-open this address through the local proxy server, which adds the required headers.</p>' : '<p>Try opening the file from your computer instead.</p>'}`;
+  if (t.kind === 'file') {
+    body.innerHTML = `
+      <p>The file is playing, but this browser is not delivering its audio to the visualizer.</p>
+      <p>Some container and codec combinations are decoded outside the Web Audio graph (for example WebM video files in Safari), so the analyser only receives silence.</p>
+      <p>Try an MP3, M4A, or WAV copy of the file, or open it in Chrome or Edge.</p>`;
+  } else if (isDirect) {
+    body.innerHTML = `
+      <p>The audio is playing, but the visualizer is receiving <b>silence</b> from the analyser.</p>
+      <p>This happens when the stream is served <b>without CORS headers</b>: the browser lets the &lt;audio&gt; element play it, but taints the Web Audio graph and returns zeroed sample data.</p>
+      <p>Windows Media Player can re-open this address through the proxy server, which adds the required headers.</p>`;
+  } else {
+    body.innerHTML = `
+      <p>The stream is playing, but the visualizer is receiving <b>silence</b> from the analyser.</p>
+      <p>The stream may have been redirected to a server that does not send CORS headers. Try opening the URL again.</p>`;
+  }
   const r = await showDialog({
     title: 'Windows Media Player',
     body,
@@ -448,6 +459,36 @@ engine.on('tainted', async () => {
     player.playIndex(i);
   }
 });
+
+// Autoplay policy. A drag-and-drop is not a "user gesture", so if it is the first interaction
+// the browser blocks play() and/or leaves the AudioContext suspended (media "plays" silently
+// into a suspended graph). Pause, explain, and let the OK click be the gesture that resumes.
+let soundPromptOpen = false;
+async function promptForSound() {
+  if (soundPromptOpen) return;
+  soundPromptOpen = true;
+  player.pause();
+  player.setStatusSticky('Waiting for permission to play sound...');
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <p>Windows Media Player needs your permission to play sound.</p>
+    <p>The browser blocks audio until you interact with the page. Click <b>OK</b> to start playback.</p>`;
+  await showDialog({
+    title: 'Windows Media Player',
+    body,
+    icon: 'info',
+    width: 400,
+    buttons: [{ label: 'OK', default: true, cancel: true }],
+  }).result;
+  soundPromptOpen = false;
+  await engine.ensureContext();
+  player.setStatusSticky(null);
+  engine.resetTaint();
+  if (engine.running) player.play();
+  else player.flashStatus('Sound is still blocked — click Play to start.', 5000);
+}
+engine.on('suspended', promptForSound);
+player.onBlocked = promptForSound;
 
 // Track info overlay: WMP shows it briefly on track change and whenever playback isn't running.
 const vizInfo = $('viz-info');

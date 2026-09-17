@@ -3,6 +3,8 @@ import { AudioFrame, createEmptyFrame } from './frame';
 export type EngineEvent =
   | 'frame'
   | 'tainted'
+  /** Media is playing but the AudioContext is not running (autoplay policy); sound + analyser are blocked. */
+  | 'suspended'
   | 'contextresumed'
   | 'error';
 
@@ -33,9 +35,10 @@ export class AudioEngine {
   private historyIdx = 0;
   private lastBeatAt = -1;
 
-  // Taint detection
+  // Taint / suspended detection
   private silentSince: number | null = null;
   private taintReported = false;
+  private suspendedReported = false;
 
   private _volume = 0.8;
   private _muted = false;
@@ -75,6 +78,12 @@ export class AudioEngine {
       this.analyser.connect(this.gain);
       this.gain.connect(this.ctx.destination);
       this.frame.sampleRate = this.ctx.sampleRate;
+      this.ctx.addEventListener('statechange', () => {
+        if (this.ctx?.state === 'running') {
+          this.suspendedReported = false;
+          this.emit('contextresumed');
+        }
+      });
     }
     if (this.ctx.state === 'suspended') {
       try {
@@ -106,7 +115,13 @@ export class AudioEngine {
   resetTaint() {
     this.silentSince = null;
     this.taintReported = false;
+    this.suspendedReported = false;
     this.frame.live = false;
+  }
+
+  /** True when the graph can actually produce sound / analyser data. */
+  get running(): boolean {
+    return !!this.ctx && this.ctx.state === 'running';
   }
 
   /** Refresh `frame` from the analyser. Call once per rAF. */
@@ -178,8 +193,20 @@ export class AudioEngine {
     this.energyHistory[this.historyIdx] = instBeat;
     this.historyIdx = (this.historyIdx + 1) % this.energyHistory.length;
 
-    // Taint detection: playing, time advancing, but analyser flat for >1.5s.
     const playing = !this.audio.paused && !this.audio.ended && this.audio.currentTime > 0.5 && this.audio.readyState >= 3;
+
+    // Autoplay policy: the element "plays" into a suspended context → silence everywhere.
+    // This is not a CORS problem; report it separately and skip taint detection.
+    if (playing && this.ctx && this.ctx.state !== 'running') {
+      this.silentSince = null;
+      if (!this.suspendedReported) {
+        this.suspendedReported = true;
+        this.emit('suspended');
+      }
+      return f;
+    }
+
+    // Taint detection: context running, time advancing, but analyser flat for >1.5s.
     const flat = sum < 0.001 && f.rms < 1e-5;
     if (playing && flat) {
       if (this.silentSince == null) this.silentSince = now;

@@ -27,6 +27,8 @@ export class Player {
   onTrackChange: ((t: Track | null) => void) | null = null;
   onError: ((message: string, detail?: string) => void) | null = null;
   onStateChange: ((s: PlayerState) => void) | null = null;
+  /** play() was rejected by the autoplay policy; the UI should ask for a gesture. */
+  onBlocked: (() => void) | null = null;
 
   private audio: HTMLAudioElement;
   private seekEl = $('seek');
@@ -125,7 +127,8 @@ export class Player {
       if (e?.name === 'AbortError') return; // superseded by another load
       if (e?.name === 'NotAllowedError') {
         this.setState('paused');
-        this.flashStatus('Click Play to start (autoplay blocked)');
+        if (this.onBlocked) this.onBlocked();
+        else this.flashStatus('Click Play to start (autoplay blocked)');
         return;
       }
       // NotSupportedError etc. — the 'error' event usually also fires; avoid double dialogs.
