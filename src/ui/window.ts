@@ -19,7 +19,15 @@ interface Options {
   onResize?: () => void;
 }
 
+let zTop = 10;
+/** Raise a window above all others. */
+export function bringToFront(el: HTMLElement) {
+  el.style.zIndex = String(++zTop);
+}
+
 export function makeWindow(el: HTMLElement, opts: Options): WindowController {
+  bringToFront(el);
+  el.addEventListener('pointerdown', () => bringToFront(el), { capture: true });
   const { titlebar, desktop } = opts;
   let minimized = false;
   let maximized = false;
@@ -37,6 +45,7 @@ export function makeWindow(el: HTMLElement, opts: Options): WindowController {
     restore() {
       minimized = false;
       el.classList.remove('minimized');
+      bringToFront(el);
       ctl.onStateChange?.(maximized ? 'maximized' : 'normal');
       opts.onResize?.();
     },

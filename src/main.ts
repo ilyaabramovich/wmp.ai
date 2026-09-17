@@ -10,6 +10,8 @@ import { MenuBar, MenuItem, showContextMenu, showDropdown, closeAllMenus } from 
 import { messageBox, openUrlDialog, progressDialog, aboutDialog, pushUrlHistory, showDialog } from './ui/dialog';
 import { Player } from './ui/player';
 import { makeTaskbar } from './ui/taskbar';
+import { openNotepad, NotepadHandle } from './ui/notepad';
+import promptText from '../PROMPT.md?raw';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -59,7 +61,8 @@ const taskbar = makeTaskbar({
     else if (id === 'open-url') openUrlFlow();
     else if (id === 'about') aboutDialog();
     else if (id === 'options') optionsDialog();
-    else if (id === 'readme') messageBox('All Programs', 'Only Windows Media Player is installed on this computer.', 'info');
+    else if (id === 'notepad') openPromptFile();
+    else if (id === 'readme') messageBox('All Programs', 'Windows Media Player and Notepad are installed on this computer.', 'info');
   },
 });
 taskbar.onWindowButtonClick = () => {
@@ -217,6 +220,7 @@ desktop.addEventListener('contextmenu', (e) => {
     { label: 'Refresh', action: () => location.reload() },
     { separator: true },
     { label: 'Open Windows Media Player', action: reopenWindow },
+    { label: 'Open PROMPT.md', action: openPromptFile },
     { separator: true },
     { label: 'Show Taskbar', checked: () => settings.taskbar, action: toggleTaskbar },
     { label: 'Properties', disabled: true },
@@ -487,13 +491,38 @@ $('icon-wmp').addEventListener('click', () => { document.querySelectorAll('.desk
 $('icon-recycle').addEventListener('click', () => { document.querySelectorAll('.desk-icon').forEach((e) => e.classList.remove('selected')); $('icon-recycle').classList.add('selected'); });
 $('icon-recycle').addEventListener('dblclick', () => messageBox('Recycle Bin', 'The Recycle Bin is empty.', 'info'));
 
+// PROMPT.md on the desktop opens in Notepad
+let promptNotepad: NotepadHandle | null = null;
+function openPromptFile() {
+  if (promptNotepad && document.body.contains(promptNotepad.el)) { promptNotepad.focus(); return; }
+  promptNotepad = openNotepad({
+    fileName: 'PROMPT.md',
+    text: promptText,
+    desktop,
+    taskbar,
+    onActivate: () => {
+      win.setActive(false);
+      taskbar.setWindowButton(titleFor(player.current), false, !windowClosed);
+    },
+  });
+}
+$('icon-prompt').addEventListener('click', () => { document.querySelectorAll('.desk-icon').forEach((e) => e.classList.remove('selected')); $('icon-prompt').classList.add('selected'); });
+$('icon-prompt').addEventListener('dblclick', openPromptFile);
+$('icon-prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter') openPromptFile(); });
+
 // Active/inactive window feel
 desktop.addEventListener('pointerdown', (e) => {
-  const inWin = !!(e.target as HTMLElement).closest('.xp-window');
-  win.setActive(inWin);
+  const target = e.target as HTMLElement;
+  const inWin = !!target.closest('.xp-window');
+  win.setActive(!!target.closest('#window'));
+  if (!inWin) promptNotepad?.deactivate();
   if (!inWin) document.querySelectorAll('.desk-icon').forEach((el) => { if (!(e.target as HTMLElement).closest('.desk-icon')) el.classList.remove('selected'); });
 });
-windowEl.addEventListener('pointerdown', () => win.setActive(true));
+windowEl.addEventListener('pointerdown', () => {
+  win.setActive(true);
+  taskbar.setWindowButton(titleFor(player.current), true, !windowClosed);
+  promptNotepad?.deactivate();
+});
 
 // WMP feature tabs
 document.querySelectorAll<HTMLButtonElement>('.wmp-tab').forEach((b) => {

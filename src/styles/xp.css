@@ -611,3 +611,27 @@ body.modal .xp-window { pointer-events: none; }
 body.modal .xp-window .xp-titlebar {
   background: linear-gradient(180deg, #9db9eb 0%, #7f9ee3 4%, #7f9ee3 90%, #6f8ed8 100%);
 }
+
+/* --------------------------------------------------------------------------
+   Notepad
+   -------------------------------------------------------------------------- */
+.xp-notepad { min-width: 320px; min-height: 200px; }
+.xp-notepad-text {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 2px 3px;
+  border: none;
+  border-top: 1px solid var(--xp-shadow);
+  outline: none;
+  resize: none;
+  background: #fff;
+  color: #000;
+  font: 12px "Lucida Console", Consolas, "Courier New", monospace;
+  line-height: 15px;
+  white-space: pre;
+  user-select: text;
+  -webkit-user-select: text;
+  tab-size: 4;
+}
+.xp-notepad-status .xp-notepad-pos { min-width: 110px; justify-content: flex-start; }

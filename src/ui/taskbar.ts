@@ -1,9 +1,18 @@
 /**
  * XP taskbar: Start button + menu, window buttons, tray clock.
  */
+export interface TaskButton {
+  setTitle(t: string): void;
+  setActive(a: boolean): void;
+  setVisible(v: boolean): void;
+  remove(): void;
+}
+
 export interface TaskbarController {
   setWindowButton(title: string, active: boolean, visible: boolean): void;
   onWindowButtonClick: (() => void) | null;
+  /** Add a taskbar button for another window (e.g. Notepad). */
+  addButton(title: string, icon: string, onClick: () => void): TaskButton;
   setVisible(v: boolean): void;
 }
 
@@ -39,6 +48,20 @@ export function makeTaskbar(opts: {
       wbtn.classList.toggle('active', active);
       wbtn.hidden = !visible;
     },
+    addButton(title, icon, onClick) {
+      const b = document.createElement('button');
+      b.className = 'xp-task-btn active';
+      b.innerHTML = `<img src="${icon}" width="16" height="16" alt=""><span></span>`;
+      b.querySelector('span')!.textContent = title;
+      b.addEventListener('click', onClick);
+      items.appendChild(b);
+      return {
+        setTitle: (t) => { b.querySelector('span')!.textContent = t; },
+        setActive: (a) => b.classList.toggle('active', a),
+        setVisible: (v) => { b.hidden = !v; },
+        remove: () => b.remove(),
+      };
+    },
     setVisible(v) {
       bar.classList.toggle('hidden-bar', !v);
       document.body.classList.toggle('no-taskbar', !v);
@@ -66,6 +89,7 @@ export function makeTaskbar(opts: {
           <div class="xp-sm-item" data-id="wmp"><img src="/wmp.svg" alt=""><div><b>Windows Media Player</b><small>Play music and visualizations</small></div></div>
           <div class="xp-sm-item" data-id="open-file"><img src="/recycle.svg" alt="" style="visibility:hidden"><div><b>Open…</b><small>Open a local audio file</small></div></div>
           <div class="xp-sm-item" data-id="open-url"><img src="/recycle.svg" alt="" style="visibility:hidden"><div><b>Open URL…</b><small>Play a YouTube or direct link</small></div></div>
+          <div class="xp-sm-item" data-id="notepad"><img src="/notepad.svg" alt=""><div><b>Notepad</b><small>Open PROMPT.md</small></div></div>
           <div class="xp-sm-sep"></div>
           <div class="xp-sm-item" data-id="readme"><img src="/recycle.svg" alt="" style="visibility:hidden"><div><b>All Programs</b></div></div>
         </div>
