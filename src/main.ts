@@ -37,6 +37,7 @@ const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify(set
 // ---------------------------------------------------------------------------
 // Core objects
 // ---------------------------------------------------------------------------
+const serverCaps = { reachable: false, youtube: true, proxy: true, serverless: false };
 const engine = new AudioEngine();
 engine.volume = settings.volume;
 const player = new Player(engine);
@@ -342,7 +343,7 @@ function addFiles(files: File[]) {
 let resolveAbort: AbortController | null = null;
 
 async function openUrlFlow() {
-  const url = await openUrlDialog(() => fileInput.click());
+  const url = await openUrlDialog(() => fileInput.click(), { youtube: serverCaps.youtube });
   if (!url) return;
   await openUrl(url);
 }
@@ -656,9 +657,17 @@ if (hash.get('preset') === RANDOM_ID) host.setRandom(true);
 // Debug handle (used by the test harness and handy in DevTools)
 (window as any).__wmp = { engine, host, player, settings };
 
-// Server health → status bar hint when yt-dlp is missing
-fetch('/api/health').then((r) => r.json()).then((h) => {
-  if (!h.ytdlp) player.flashStatus('yt-dlp not found on server — YouTube URLs disabled (local files still work)', 8000);
+// Server capabilities. The Express server (npm run dev) supports YouTube via
+// yt-dlp; the Vercel serverless functions in api/ only provide the CORS proxy.
+fetch('/api/health').then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); }).then((h) => {
+  serverCaps.reachable = true;
+  serverCaps.serverless = !!h.serverless;
+  serverCaps.youtube = h.capabilities ? !!h.capabilities.youtube : !!h.ytdlp;
+  serverCaps.proxy = h.capabilities ? !!h.capabilities.proxy : true;
+  if (h.serverless) player.flashStatus('Hosted build: local files and direct audio URLs play here. YouTube links need the local server (npm run dev).', 10000);
+  else if (!h.ytdlp) player.flashStatus('yt-dlp not found on server — YouTube URLs disabled (local files still work)', 8000);
 }).catch(() => {
+  serverCaps.youtube = false;
+  serverCaps.proxy = false;
   player.flashStatus('API server not reachable — run `npm run dev` for YouTube support', 8000);
 });

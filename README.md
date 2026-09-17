@@ -92,6 +92,23 @@ stream is CORS-tainted and, for direct URLs, offers to reopen it through the pro
 - **Local files**: anything the browser can decode (MP3, AAC/M4A, OGG/Opus, WAV, FLAC,
   WebM). Files are never uploaded; they play from an object URL in the page.
 
+## Deploying (Vercel)
+
+The repo deploys to Vercel as a static Vite site plus the serverless functions in `api/`
+(`vercel.json` pins the framework and `dist` output). Those functions replace
+`server/index.js` on the host:
+
+| Route | Hosted (Vercel) | Local (`npm run dev`) |
+| --- | --- | --- |
+| `/api/health` | reports `capabilities.youtube: false` | reports yt-dlp version |
+| `/api/proxy?url=` | streaming CORS proxy with Range | same |
+| `/api/resolve` | 501 with an explanatory message | yt-dlp extraction |
+| `/api/stream/:key` | not available | Range-aware proxy of the extracted stream |
+
+So a hosted copy plays **local files and direct audio URLs**; **YouTube links only work
+locally**, because yt-dlp needs a subprocess (and YouTube blocks most datacenter IPs). The
+app detects this from `/api/health` and says so in the status bar and the Open URL dialog.
+
 ## Terms of service caveat
 
 Extracting audio from YouTube with `yt-dlp` may violate YouTube's Terms of Service. This
@@ -102,6 +119,8 @@ server publicly or use it to redistribute content.
 
 ```
 server/index.js          Express API: /api/resolve, /api/stream/:key, /api/proxy, /api/health
+api/*.js                 Vercel serverless stand-ins (health, proxy, resolve → 501)
+vercel.json              Vercel build settings
 src/audio/frame.ts       AudioFrame type shared by all visualizers
 src/audio/engine.ts      AudioContext graph, analyser, energy/beat envelope, taint detection
 src/audio/sources.ts     Track model, local-file / direct-URL / YouTube (via server) loaders

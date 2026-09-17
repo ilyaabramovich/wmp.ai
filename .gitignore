@@ -2,3 +2,14 @@ node_modules
 dist
 server/cache
 .DS_Store
+
+# downloaded media / test audio
+*.webm
+*.mp3
+*.m4a
+*.mp4
+*.ogg
+*.opus
+*.wav
+*.flac
+!public/**

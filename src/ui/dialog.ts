@@ -183,16 +183,19 @@ export function pushUrlHistory(url: string) {
 }
 
 /** WMP's File → Open URL… dialog. Resolves with the URL or null. */
-export function openUrlDialog(onBrowse?: () => void): Promise<string | null> {
+export function openUrlDialog(onBrowse?: () => void, caps: { youtube?: boolean } = {}): Promise<string | null> {
+  const youtube = caps.youtube !== false;
   const body = document.createElement('div');
   body.innerHTML = `
     <p>Enter the URL or path to a media file on the Internet, your computer, or your network that you want to play.</p>
     <label for="openurl-input">Open:</label>
     <div class="xp-combo">
-      <input id="openurl-input" class="xp-input" type="text" spellcheck="false" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…" />
+      <input id="openurl-input" class="xp-input" type="text" spellcheck="false" autocomplete="off" placeholder="${youtube ? 'https://www.youtube.com/watch?v=…' : 'https://example.com/song.mp3'}" />
       <button class="xp-combo-btn" type="button" tabindex="-1" aria-label="History"></button>
     </div>
-    <p style="margin-top:10px;color:#444">Supports YouTube links (resolved through the local server) and direct .mp3 / .ogg / .wav / .m4a addresses.</p>
+    <p style="margin-top:10px;color:#444">${youtube
+      ? 'Supports YouTube links (resolved through the local server) and direct .mp3 / .ogg / .wav / .m4a addresses.'
+      : 'This hosted copy plays direct .mp3 / .ogg / .wav / .m4a addresses. YouTube links need the local server (<code>npm run dev</code>).'}</p>
   `;
   let value = '';
   const input = body.querySelector<HTMLInputElement>('#openurl-input')!;
