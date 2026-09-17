@@ -38,6 +38,8 @@ const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify(set
 // Core objects
 // ---------------------------------------------------------------------------
 const serverCaps = { reachable: false, youtube: true, proxy: true, serverless: false };
+/** Resolves once /api/health has answered (or failed); Open URL waits on it briefly. */
+let capsReady: Promise<void> = Promise.resolve();
 const engine = new AudioEngine();
 engine.volume = settings.volume;
 const player = new Player(engine);
@@ -343,6 +345,8 @@ function addFiles(files: File[]) {
 let resolveAbort: AbortController | null = null;
 
 async function openUrlFlow() {
+  // Serverless cold starts can take a couple of seconds; wait (bounded) so the dialog hint is right.
+  await Promise.race([capsReady, new Promise((r) => setTimeout(r, 3000))]);
   const url = await openUrlDialog(() => fileInput.click(), { youtube: serverCaps.youtube });
   if (!url) return;
   await openUrl(url);
@@ -659,7 +663,7 @@ if (hash.get('preset') === RANDOM_ID) host.setRandom(true);
 
 // Server capabilities. The Express server (npm run dev) supports YouTube via
 // yt-dlp; the Vercel serverless functions in api/ only provide the CORS proxy.
-fetch('/api/health').then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); }).then((h) => {
+capsReady = fetch('/api/health').then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); }).then((h) => {
   serverCaps.reachable = true;
   serverCaps.serverless = !!h.serverless;
   serverCaps.youtube = h.capabilities ? !!h.capabilities.youtube : !!h.ytdlp;
