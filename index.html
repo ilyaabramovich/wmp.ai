@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Windows Media Player</title>
+    <link rel="icon" href="/wmp.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div id="desktop" class="desktop">
+      <!-- Desktop icons -->
+      <div class="desk-icons">
+        <div class="desk-icon" id="icon-wmp" title="Windows Media Player">
+          <img src="/wmp.svg" width="32" height="32" alt="" draggable="false" />
+          <span>Windows Media Player</span>
+        </div>
+        <div class="desk-icon" id="icon-recycle">
+          <img src="/recycle.svg" width="32" height="32" alt="" draggable="false" />
+          <span>Recycle Bin</span>
+        </div>
+      </div>
+
+      <!-- Main window -->
+      <div id="window" class="xp-window" style="left: 80px; top: 40px; width: 900px; height: 620px">
+        <div class="xp-titlebar" id="titlebar">
+          <img class="xp-titleicon" src="/wmp.svg" width="16" height="16" alt="" draggable="false" />
+          <span class="xp-title">Windows Media Player</span>
+          <div class="xp-titlebuttons">
+            <button class="xp-tb xp-tb-min" id="btn-min" title="Minimize" aria-label="Minimize"></button>
+            <button class="xp-tb xp-tb-max" id="btn-max" title="Maximize" aria-label="Maximize"></button>
+            <button class="xp-tb xp-tb-close" id="btn-close" title="Close" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="xp-menubar" id="menubar"></div>
+
+        <div class="wmp-body">
+          <div class="wmp-taskbar" id="wmp-taskbar">
+            <button class="wmp-tab active" data-tab="nowplaying">Now Playing</button>
+            <button class="wmp-tab" data-tab="guide">Media Guide</button>
+            <button class="wmp-tab" data-tab="cd">Copy from CD</button>
+            <button class="wmp-tab" data-tab="library">Media Library</button>
+            <button class="wmp-tab" data-tab="radio">Radio Tuner</button>
+            <button class="wmp-tab" data-tab="burn">Copy to CD or Device</button>
+            <button class="wmp-tab" data-tab="premium">Premium Services</button>
+            <button class="wmp-tab" data-tab="skin">Skin Chooser</button>
+          </div>
+
+          <div class="wmp-main">
+            <div class="wmp-nowplaying">
+              <div class="wmp-np-header">
+                <button class="wmp-np-menu" id="btn-np-options" title="Select Now Playing options">
+                  <span class="wmp-np-menu-label">Now Playing</span><span class="wmp-arrow">▾</span>
+                </button>
+                <span class="wmp-np-trackname" id="np-header-title"></span>
+              </div>
+              <div class="wmp-content">
+                <div class="wmp-viz-pane" id="viz-pane">
+                  <canvas id="viz" width="320" height="240"></canvas>
+                  <div class="wmp-viz-overlay" id="viz-overlay"></div>
+                  <div class="wmp-viz-info" id="viz-info">
+                    <img id="np-thumb" class="wmp-np-thumb" alt="" draggable="false" hidden />
+                    <div class="wmp-np-text">
+                      <div class="wmp-np-title" id="np-title">Windows Media Player</div>
+                      <div class="wmp-np-artist" id="np-artist">Open a file or URL to begin (File → Open URL…)</div>
+                    </div>
+                  </div>
+                  <div class="crt-overlay" id="crt" hidden></div>
+                  <div class="wmp-drop-hint" id="drop-hint">
+                    <div class="wmp-drop-box">Drop an audio file to play</div>
+                  </div>
+                </div>
+                <div class="wmp-viz-bar">
+                  <button class="wmp-viz-btn" id="viz-select" title="Select visualization or album art">
+                    <span class="wmp-viz-star">✱</span>
+                  </button>
+                  <button class="wmp-viz-btn wmp-viz-prev" id="viz-prev" title="Previous visualization">◂</button>
+                  <button class="wmp-viz-btn wmp-viz-next" id="viz-next" title="Next visualization">▸</button>
+                  <span class="wmp-viz-name" id="viz-name">Bars and Waves: Ocean Mist</span>
+                  <span class="wmp-viz-spacer"></span>
+                  <button class="wmp-viz-btn" id="viz-fullscreen" title="View full screen (Alt+Enter)">⤢</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="wmp-playlist" id="playlist">
+              <div class="wmp-pl-header">
+                <button class="wmp-pl-menu" id="btn-pl-options"><span>Now Playing List</span><span class="wmp-arrow">▾</span></button>
+              </div>
+              <div class="wmp-pl-body">
+                <ul class="wmp-pl-items" id="playlist-items"></ul>
+                <div class="wmp-pl-empty" id="playlist-empty">
+                  There are no items in the playlist.<br /><br />
+                  Drag a file here, or choose <b>File → Open URL…</b>
+                </div>
+              </div>
+              <div class="wmp-pl-footer">
+                <span id="pl-count">0 item(s)</span>
+                <span id="pl-total">Total Time: 0:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wmp-transport">
+          <div class="wmp-seek" id="seek">
+            <div class="wmp-seek-groove">
+              <div class="wmp-seek-buffered" id="seek-buffered"></div>
+              <div class="wmp-seek-fill" id="seek-fill"></div>
+            </div>
+            <div class="wmp-seek-thumb" id="seek-thumb"></div>
+          </div>
+          <div class="wmp-controls">
+            <div class="wmp-ctl-left">
+              <button class="wmp-btn wmp-btn-play" id="btn-play" title="Play (Ctrl+P)">
+                <svg class="ico-play" viewBox="0 0 16 16" width="18" height="18"><path d="M4 2l9 6-9 6z" fill="currentColor"/></svg>
+                <svg class="ico-pause" viewBox="0 0 16 16" width="18" height="18" hidden><path d="M3 2h4v12H3zM9 2h4v12H9z" fill="currentColor"/></svg>
+              </button>
+              <button class="wmp-btn wmp-btn-small" id="btn-stop" title="Stop (Ctrl+S)">
+                <svg viewBox="0 0 16 16" width="12" height="12"><rect x="3" y="3" width="10" height="10" fill="currentColor"/></svg>
+              </button>
+              <span class="wmp-ctl-sep"></span>
+              <button class="wmp-btn wmp-btn-small" id="btn-prev" title="Previous (Ctrl+B)">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 3h2v10H3zM13 3L6 8l7 5z" fill="currentColor"/></svg>
+              </button>
+              <button class="wmp-btn wmp-btn-small" id="btn-rew" title="Rewind">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 3L1 8l7 5zM15 3L8 8l7 5z" fill="currentColor"/></svg>
+              </button>
+              <button class="wmp-btn wmp-btn-small" id="btn-ff" title="Fast Forward">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M1 3l7 5-7 5zM8 3l7 5-7 5z" fill="currentColor"/></svg>
+              </button>
+              <button class="wmp-btn wmp-btn-small" id="btn-next" title="Next (Ctrl+F)">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M11 3h2v10h-2zM3 3l7 5-7 5z" fill="currentColor"/></svg>
+              </button>
+            </div>
+            <div class="wmp-ctl-right">
+              <button class="wmp-btn wmp-btn-small" id="btn-mute" title="Mute (F8)">
+                <svg class="ico-vol" viewBox="0 0 16 16" width="12" height="12"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path d="M11 5c1.5 1.5 1.5 4.5 0 6M13 3c2.5 2.5 2.5 7.5 0 10" stroke="currentColor" fill="none" stroke-width="1.3"/></svg>
+                <svg class="ico-muted" viewBox="0 0 16 16" width="12" height="12" hidden><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path d="M10.5 5.5l4 5M14.5 5.5l-4 5" stroke="currentColor" stroke-width="1.5"/></svg>
+              </button>
+              <div class="wmp-volume" id="volume" title="Volume">
+                <div class="wmp-vol-groove"><div class="wmp-vol-fill" id="vol-fill"></div></div>
+                <div class="wmp-vol-thumb" id="vol-thumb"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="xp-statusbar">
+          <span class="xp-status-cell xp-status-main" id="status-text">Ready</span>
+          <span class="xp-status-cell" id="status-bitrate"></span>
+          <span class="xp-status-cell xp-status-time" id="status-time">00:00 / 00:00</span>
+        </div>
+
+        <div class="xp-resize n"></div><div class="xp-resize s"></div><div class="xp-resize e"></div><div class="xp-resize w"></div>
+        <div class="xp-resize ne"></div><div class="xp-resize nw"></div><div class="xp-resize se"></div><div class="xp-resize sw"></div>
+      </div>
+    </div>
+
+    <div id="taskbar" class="xp-taskbar">
+      <button class="xp-start" id="btn-start">
+        <img src="/winflag.svg" width="22" height="22" alt="" draggable="false" />
+        <span>start</span>
+      </button>
+      <div class="xp-taskbar-items" id="taskbar-items"></div>
+      <div class="xp-tray">
+        <img src="/tray-volume.svg" width="16" height="16" alt="" draggable="false" />
+        <img src="/tray-network.svg" width="16" height="16" alt="" draggable="false" />
+        <span class="xp-clock" id="clock">12:00 PM</span>
+      </div>
+    </div>
+
+    <div id="menu-root"></div>
+    <div id="dialog-root"></div>
+
+    <input type="file" id="file-input" accept="audio/*,video/*,.mp3,.m4a,.ogg,.wav,.flac,.webm,.opus,.aac" multiple hidden />
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

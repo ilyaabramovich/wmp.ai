@@ -1,0 +1,25 @@
+{
+  "name": "wmp-xp-visualizer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Windows XP-era Windows Media Player visualizations driven by live audio (local file, YouTube via yt-dlp, or direct URL).",
+  "scripts": {
+    "dev": "concurrently -k -n server,vite -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:client": "vite",
+    "dev:server": "node --watch server/index.js",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "start": "node server/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}
